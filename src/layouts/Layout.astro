@@ -1,0 +1,64 @@
+---
+import '../styles/global.css';
+import type { Locale } from '../i18n/content';
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description: string;
+  skipLabel: string;
+}
+
+const { locale, title, description, skipLabel } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const alternates = [
+  { lang: 'es', href: new URL('/', Astro.site) },
+  { lang: 'en', href: new URL('/en/', Astro.site) },
+];
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {alternates.map((a) => <link rel="alternate" hreflang={a.lang} href={a.href} />)}
+    <link rel="alternate" hreflang="x-default" href={alternates[0].href} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={locale === 'es' ? 'es_ES' : 'en_GB'} />
+    <meta name="theme-color" content="#faf9f5" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
+  </head>
+  <body class="min-h-svh antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-ink focus:px-4 focus:py-2 focus:text-bg"
+    >
+      {skipLabel}
+    </a>
+    <slot />
+    <script>
+      const targets = document.querySelectorAll('[data-reveal]');
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            e.target.classList.add('is-in');
+            io.unobserve(e.target);
+          }
+        },
+        { rootMargin: '0px 0px -10% 0px' },
+      );
+      targets.forEach((el) => io.observe(el));
+    </script>
+  </body>
+</html>

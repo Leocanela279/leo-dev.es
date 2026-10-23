@@ -1,0 +1,91 @@
+---
+// Reads the real navigation timing of the request that served this page.
+// Without JavaScript the readout keeps its "—" placeholders.
+interface Props {
+  t: {
+    caption: string;
+    ttfb: string;
+    protocol: string;
+    ready: string;
+    requests: string;
+    weight: string;
+    viewport: string;
+    cached: string;
+    pending: string;
+  };
+}
+
+const { t } = Astro.props;
+const rows = [
+  ['protocol', t.protocol],
+  ['ready', t.ready],
+  ['requests', t.requests],
+  ['weight', t.weight],
+  ['viewport', t.viewport],
+] as const;
+---
+
+<figure data-instrument data-cached={t.cached} class="card w-full p-6 sm:p-8">
+  <figcaption class="flex items-center gap-2 text-small text-muted">
+    <span aria-hidden="true" class="size-2 rounded-full bg-accent"></span>
+    {t.caption}
+  </figcaption>
+  <p class="mt-6">
+    <span class="sr-only">{t.ttfb}:</span>
+    <span data-key="ttfb" class="serif block text-[clamp(2.75rem,2rem+2.5vw,4rem)] leading-none tracking-[-0.03em] tabular-nums">{t.pending}</span>
+  </p>
+  <p aria-hidden="true" class="mt-2 text-small text-muted">{t.ttfb}</p>
+  <dl class="mt-6 grid grid-cols-[1fr_auto] gap-x-6 rounded-2xl bg-surface-2 px-5 py-2 text-small">
+    {
+      rows.map(([key, label]) => (
+        <>
+          <dt class="py-2 text-muted">{label}</dt>
+          <dd class="py-2 text-right font-medium tabular-nums" data-key={key}>
+            {t.pending}
+          </dd>
+        </>
+      ))
+    }
+  </dl>
+</figure>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-instrument]');
+
+  function set(key: string, value: string) {
+    const el = root?.querySelector(`[data-key="${key}"]`);
+    if (el) el.textContent = value;
+  }
+
+  function protocolName(p: string) {
+    if (p === 'h2') return 'HTTP/2';
+    if (p === 'h3') return 'HTTP/3';
+    if (p.startsWith('http/')) return p.toUpperCase();
+    return '—';
+  }
+
+  function measure() {
+    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
+    if (!nav) return;
+
+    set('ttfb', `${Math.max(1, Math.round(nav.responseStart - nav.startTime))} ms`);
+    set('protocol', protocolName(nav.nextHopProtocol));
+    set('ready', `${Math.round(nav.domContentLoadedEventEnd)} ms`);
+    set('requests', String(resources.length + 1));
+
+    const bytes = resources.reduce((sum, r) => sum + r.transferSize, nav.transferSize);
+    set('weight', bytes > 0 ? `${(bytes / 1024).toFixed(1)} kB` : (root?.dataset.cached ?? '—'));
+  }
+
+  function viewport() {
+    set('viewport', `${window.innerWidth} × ${window.innerHeight}`);
+  }
+
+  if (root) {
+    viewport();
+    window.addEventListener('resize', viewport, { passive: true });
+    if (document.readyState === 'complete') measure();
+    else window.addEventListener('load', () => setTimeout(measure, 0), { once: true });
+  }
+</script>

@@ -1,0 +1,445 @@
+---
+import { Image } from 'astro:assets';
+import { Icon } from 'astro-icon/components';
+import Layout from '../layouts/Layout.astro';
+import Instrument from './Instrument.astro';
+import sagradaArt from '../assets/ascii/sagrada.png';
+import { content, links, type Locale } from '../i18n/content';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = content[locale];
+const home = locale === 'es' ? '/' : '/en/';
+const year = new Date().getFullYear();
+
+// Each language is named in itself, so a visitor can always find their own.
+const languages = [
+  { code: 'es', name: 'Español', href: '/' },
+  { code: 'en', name: 'English', href: '/en/' },
+] as const;
+const currentLang = languages.find((l) => l.code === locale)!;
+
+const container = 'mx-auto w-full max-w-6xl px-5 md:px-8';
+// Bento: the first and last skill groups span the full width of the grid.
+const skillSpan = (i: number, n: number) => (i === 0 || i === n - 1 ? 'sm:col-span-2' : '');
+---
+
+<Layout locale={locale} title={t.meta.title} description={t.meta.description} skipLabel={t.skip}>
+  <header class="site-header sticky top-0 z-20">
+    <div class={`${container} flex h-16 items-center justify-between gap-6`}>
+      <a href={home} class="serif text-lg tracking-[-0.01em]">Leandro Canela</a>
+      <nav aria-label={t.nav.label} class="flex items-center gap-1 text-small">
+        <ul class="hidden items-center gap-1 sm:flex">
+          <li><a href={`#${t.ids.work}`} class="rounded-full px-3 py-2 hover:bg-surface-2">{t.nav.work}</a></li>
+          <li><a href={`#${t.ids.about}`} class="rounded-full px-3 py-2 hover:bg-surface-2">{t.nav.about}</a></li>
+          <li><a href={`#${t.ids.contact}`} class="rounded-full px-3 py-2 hover:bg-surface-2">{t.nav.contact}</a></li>
+        </ul>
+        <details class="lang-menu relative ml-2">
+          <summary
+            aria-label={`${t.langLabel}: ${currentLang.name}`}
+            class="inline-flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-full border border-line bg-surface px-3 select-none hover:border-[color-mix(in_srgb,var(--ink)_35%,var(--border))]"
+          >
+            <Icon name="lucide:globe" aria-hidden="true" class="size-4" />
+            <span>{currentLang.name}</span>
+            <Icon name="lucide:chevron-down" aria-hidden="true" class="chevron size-4 text-muted" />
+          </summary>
+          <ul class="lang-options card absolute top-full right-0 mt-2 min-w-44 p-1.5">
+            {
+              languages.map((l) => (
+                <li>
+                  <a
+                    href={l.href}
+                    lang={l.code}
+                    hreflang={l.code}
+                    aria-current={l.code === locale ? 'page' : undefined}
+                    class="flex min-h-10 items-center justify-between gap-6 rounded-xl px-3 hover:bg-surface-2 aria-[current]:font-semibold"
+                  >
+                    {l.name}
+                    {l.code === locale && <Icon name="lucide:check" aria-hidden="true" class="size-4 text-accent" />}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </details>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Hero: the name across the width, then the pitch beside the live request card. -->
+    <section aria-labelledby="title" class={`${container} pt-16 pb-24 md:pt-24 md:pb-32`}>
+      <h1 id="title" class="text-display">
+        {t.hero.lines.map((line) => <span class="mask-line"><span>{line}</span></span>)}
+      </h1>
+      <div class="after-headline mt-12 grid items-start gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
+        <div>
+          <p class="max-w-[46ch] text-lead text-muted">{t.hero.sentence}</p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href={`#${t.ids.work}`} class="btn btn-primary">
+              {t.hero.action}
+              <Icon name="lucide:arrow-down" aria-hidden="true" />
+            </a>
+            <a href={links.cv} class="btn btn-secondary">
+              {t.hero.secondary}
+              <Icon name="lucide:file-down" aria-hidden="true" />
+            </a>
+          </div>
+        </div>
+        <Instrument t={t.instrument} />
+      </div>
+    </section>
+
+    <!-- Projects: a timeline, newest first. Each project is one card. -->
+    <section id={t.ids.work} aria-labelledby="work-heading" class={`${container} pb-28 md:pb-40`}>
+      <div data-reveal class="max-w-2xl">
+        <h2 id="work-heading" class="text-head">{t.work.heading}</h2>
+        <p class="mt-3 text-lead text-muted">{t.work.intro}</p>
+      </div>
+
+      <ol class="timeline relative mt-14 space-y-10 md:space-y-14">
+        {
+          t.projects.map((p) => (
+            <li class="relative grid grid-cols-[1.5rem_1fr] gap-x-4 md:grid-cols-[10rem_1.5rem_1fr] md:gap-x-0">
+              <span
+                aria-hidden="true"
+                class="col-start-1 row-start-1 mt-1.5 size-3 justify-self-center rounded-full bg-accent ring-4 ring-bg md:col-start-2 md:mt-9"
+              />
+              <time
+                datetime={p.start}
+                class="col-start-2 row-start-1 text-small font-medium whitespace-nowrap text-muted md:col-start-1 md:pt-8 md:pr-6 md:text-right"
+              >
+                {p.period}
+              </time>
+              <article
+                id={p.id}
+                aria-labelledby={`${p.id}-name`}
+                data-reveal
+                class="card card-lift col-start-2 mt-3 grid scroll-mt-24 gap-8 p-6 md:col-start-3 md:mt-0 md:ml-6 md:p-8 lg:grid-cols-[1fr_1.05fr]"
+              >
+                <div class="flex flex-col">
+                  <h3 id={`${p.id}-name`} class="text-[1.75rem] leading-tight tracking-[-0.02em]">
+                    {p.name}
+                  </h3>
+                  <p class="mt-1 text-small text-muted">{p.kind}</p>
+                  <p class="mt-5">{p.summary}</p>
+                  <ul class="mt-6 flex flex-wrap gap-2" aria-label={t.work.stack}>
+                    {p.stack.map((s) => (
+                      <li class="chip">
+                        <Icon name={s.icon} aria-hidden="true" />
+                        {s.label}
+                      </li>
+                    ))}
+                  </ul>
+                  {(p.link || p.repo) && (
+                    <div class="mt-8 flex flex-wrap gap-3 lg:mt-auto lg:pt-8">
+                      {p.link && (
+                        <a href={p.link.href} class="btn btn-primary">
+                          {p.link.label}
+                          <Icon name="lucide:arrow-up-right" aria-hidden="true" />
+                        </a>
+                      )}
+                      {p.repo && (
+                        <a href={p.repo.href} class="btn btn-secondary">
+                          <Icon name="simple-icons:github" aria-hidden="true" />
+                          {p.repo.label}
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <div class="overflow-hidden rounded-2xl border border-line bg-surface-2">
+                    <Image
+                      src={p.image}
+                      alt={p.alt}
+                      widths={[480, 720, 1080]}
+                      sizes="(min-width: 72rem) 500px, (min-width: 64rem) 42vw, 90vw"
+                      class="aspect-[16/10] w-full object-cover object-top"
+                    />
+                  </div>
+                  <ul class="mt-6 space-y-2.5">
+                    {p.facts.map((f) => (
+                      <li class="flex gap-2.5 text-[0.9375rem] leading-normal">
+                        <Icon name="lucide:circle-check" aria-hidden="true" class="mt-[0.2em] size-4 shrink-0 text-accent" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <!-- About: the letter in one card, the tools as a bento beside it. -->
+    <section id={t.ids.about} aria-labelledby="about-heading" class={`${container} pb-28 md:pb-40`}>
+      <div class="grid gap-6 lg:grid-cols-12">
+        <div data-reveal class="card p-8 md:p-12 lg:col-span-7">
+          <h2 id="about-heading" class="text-head">{t.about.heading}</h2>
+          <div class="mt-6 space-y-5">
+            {t.about.paragraphs.map((para) => <p>{para}</p>)}
+          </div>
+          <p class="serif mt-10 text-xl italic">Leandro Canela</p>
+          <p class="text-small text-muted">{t.about.role}</p>
+        </div>
+        <div data-reveal style="--d: 90ms" class="lg:col-span-5">
+          <h3 class="sr-only">{t.about.skillsHeading}</h3>
+          <ul class="grid h-full gap-4 sm:grid-cols-2">
+            {
+              t.about.skills.map((g, i) => (
+                <li class={`card p-6 ${skillSpan(i, t.about.skills.length)}`}>
+                  <div class="flex items-center gap-3">
+                    <span class="grid size-9 place-items-center rounded-xl bg-accent-soft text-accent">
+                      <Icon name={g.icon} aria-hidden="true" class="size-[1.1rem]" />
+                    </span>
+                    <h4 class="font-semibold">{g.title}</h4>
+                  </div>
+                  <ul class="mt-4 flex flex-wrap gap-2">
+                    {g.items.map((s) => (
+                      <li class="chip">
+                        <Icon name={s.icon} aria-hidden="true" />
+                        {s.label}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact: the one red surface on the page. -->
+    <section id={t.ids.contact} aria-labelledby="contact-heading" class={`${container} pb-20`}>
+      <div
+        data-reveal
+        class="grid gap-10 rounded-[1.75rem] bg-accent p-8 text-accent-ink md:p-14 lg:grid-cols-[1.4fr_1fr] lg:items-end"
+      >
+        <div>
+          <h2 id="contact-heading" class="text-head max-w-[18ch]">{t.contact.heading}</h2>
+          <p class="mt-4 max-w-[44ch] text-lead opacity-90">{t.contact.sentence}</p>
+          <p class="mt-8 inline-flex items-center gap-2 text-small opacity-90">
+            <Icon name="lucide:map-pin" aria-hidden="true" class="size-4" />
+            {t.contact.city}
+          </p>
+        </div>
+        <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:flex-col lg:items-stretch">
+          <a href={`mailto:${links.email}`} class="btn btn-inverse">
+            <Icon name="lucide:mail" aria-hidden="true" />
+            <span class="break-all">{links.email}</span>
+          </a>
+          <a href={links.github} class="btn btn-outline-inverse">
+            <Icon name="simple-icons:github" aria-hidden="true" />
+            GitHub
+          </a>
+          <a href={links.cv} class="btn btn-outline-inverse">
+            <Icon name="lucide:file-down" aria-hidden="true" />
+            {t.contact.cv}
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer: the ASCII Sagrada Família fills the background; links, the bracketed bar and the notes sit on top. -->
+  <footer class="site-footer relative isolate mt-8 overflow-hidden">
+    <Image
+      src={sagradaArt}
+      alt=""
+      aria-hidden="true"
+      widths={[1400, 2200, 3600]}
+      sizes="(min-width: 48rem) 100vw, 2100px"
+      class="ascii-art absolute bottom-0 left-1/2 -z-10 h-[44rem] w-auto max-w-none -translate-x-1/2 md:inset-0 md:size-full md:translate-x-0 md:object-cover"
+    />
+    <div class={`${container} pt-14 pb-8 md:pt-16`}>
+      <div class="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-12">
+        <div class="col-span-2 md:col-span-4">
+          <p class="serif text-2xl tracking-[-0.01em]">Leandro Canela</p>
+          <p class="mt-3 max-w-[34ch] text-small text-[var(--footer-muted)]">{t.footer.what}</p>
+        </div>
+        <nav aria-label={t.footer.work} class="md:col-span-3 md:col-start-6">
+          <h2 class="footer-label">{t.footer.work}</h2>
+          <ul class="mt-4 space-y-0.5">
+            {t.projects.map((p) => <li><a href={`#${p.id}`} class="footer-link">{p.name}</a></li>)}
+          </ul>
+        </nav>
+        <nav aria-label={t.footer.site} class="md:col-span-2">
+          <h2 class="footer-label">{t.footer.site}</h2>
+          <ul class="mt-4 space-y-0.5">
+            <li><a href={`#${t.ids.about}`} class="footer-link">{t.nav.about}</a></li>
+            <li><a href={`#${t.ids.contact}`} class="footer-link">{t.nav.contact}</a></li>
+            {languages.filter((l) => l.code !== locale).map((l) => (
+              <li><a href={l.href} lang={l.code} hreflang={l.code} class="footer-link">{l.name}</a></li>
+            ))}
+          </ul>
+        </nav>
+        <div class="md:col-span-2">
+          <h2 class="footer-label">{t.footer.elsewhere}</h2>
+          <ul class="mt-4 space-y-0.5">
+            <li><a href={`mailto:${links.email}`} class="footer-link">Email</a></li>
+            <li><a href={links.github} class="footer-link">GitHub</a></li>
+            <li><a href={links.gitlab} class="footer-link">GitLab</a></li>
+            <li><a href={links.cv} class="footer-link">CV</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="bracket footer-veil mt-12 flex flex-col items-center gap-3 px-5 py-6 text-center md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4 md:px-8 md:py-5 md:text-left">
+        <p class="footer-label order-2 md:order-none">© {year} Leandro Canela</p>
+        <a href={home} aria-label="Leandro Canela" class="order-1 grid size-10 place-items-center rounded-full md:order-none border border-[var(--footer-line)] serif text-sm transition-colors hover:border-[var(--footer-ink)]">LC</a>
+        <p class="footer-label order-3 md:order-none md:text-right">
+          <span class="sr-only">{t.footer.clock}: </span>
+          Barcelona <time data-bcn-clock class="tabular-nums"></time>
+        </p>
+      </div>
+      <div class="footer-veil mx-auto mt-5 w-fit max-w-full space-y-1 rounded-2xl px-5 py-3 text-center text-small text-[var(--footer-muted)]">
+        <p>{t.footer.privacy}</p>
+        <p class="text-xs">
+          {t.footer.artCredit}{' '}
+          <a href="https://commons.wikimedia.org/wiki/File:Sagrada_Fam%C3%ADlia_2010.JPG" class="link">«Sagrada Família 2010»</a>{' '}
+          {t.footer.artBy}, <a href="https://creativecommons.org/licenses/by-sa/3.0/" class="link">CC BY-SA 3.0</a>.
+        </p>
+      </div>
+    </div>
+  </footer>
+</Layout>
+
+<script>
+  // Close the language menu on Escape (returning focus to its button) or on a click outside it.
+  const menu = document.querySelector<HTMLDetailsElement>('.lang-menu');
+  // Barcelona's local time in the footer, refreshed every minute. Without JS only the city shows.
+  const clock = document.querySelector<HTMLTimeElement>('[data-bcn-clock]');
+  if (clock) {
+    const fmt = new Intl.DateTimeFormat('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' });
+    const tick = () => {
+      const now = new Date();
+      clock.textContent = fmt.format(now);
+      clock.dateTime = now.toISOString();
+    };
+    tick();
+    setInterval(tick, 30_000);
+  }
+
+  if (menu) {
+    document.addEventListener('click', (e) => {
+      if (menu.open && !menu.contains(e.target as Node)) menu.open = false;
+    });
+    menu.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && menu.open) {
+        menu.open = false;
+        menu.querySelector('summary')?.focus();
+      }
+    });
+  }
+</script>
+
+<style>
+  .lang-menu summary::-webkit-details-marker { display: none; }
+  .lang-menu .chevron { transition: transform 200ms var(--ease-out); }
+  .lang-menu[open] .chevron { transform: rotate(180deg); }
+
+  /* The menu grows out of the button's corner and floats, so it gets the page's only shadow at rest. */
+  .lang-options {
+    border-radius: 1rem;
+    box-shadow: 0 16px 40px -16px rgb(20 20 19 / 0.25);
+    transform-origin: top right;
+    transition: opacity 150ms ease, transform 200ms var(--ease-out);
+  }
+  @starting-style {
+    .lang-menu[open] .lang-options { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lang-menu .chevron, .lang-options { transition: opacity 150ms ease; }
+    @starting-style {
+      .lang-menu[open] .lang-options { transform: none; }
+    }
+  }
+
+  .site-footer {
+    --footer-bg: var(--surface-2);
+    --footer-ink: var(--ink);
+    --footer-muted: var(--muted);
+    --footer-line: rgb(20 20 19 / 0.22);
+    --footer-accent: var(--accent);
+    background: var(--footer-bg);
+    color: var(--footer-ink);
+  }
+
+  /* Shaded ASCII of a real photograph (scripts/ascii.py), anchored on the towers. */
+  .ascii-art {
+    object-position: 50% 30%;
+    opacity: 0.5;
+    pointer-events: none;
+    user-select: none;
+  }
+  /* Text over the art gets a halo of the footer's own ground, so it stays readable on dense stone. */
+  .site-footer :is(p, a, h2, time) {
+    text-shadow:
+      0 0 1px var(--footer-bg), 0 0 3px var(--footer-bg), 0 0 6px var(--footer-bg),
+      0 0 10px var(--footer-bg), 0 0 16px var(--footer-bg);
+  }
+  /* Just enough ground under the small print for it to read; the basilica still shows through. */
+  .footer-veil { background: color-mix(in srgb, var(--footer-bg) 72%, transparent); }
+
+  .footer-label {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--footer-muted);
+  }
+  .footer-link {
+    display: inline-block;
+    padding-block: 0.375rem;
+    color: var(--footer-ink);
+    transition: color 150ms ease, transform 200ms var(--ease-out);
+  }
+  .footer-link:hover { color: var(--footer-accent); transform: translateX(2px); }
+  .site-footer :focus-visible { outline-color: var(--footer-ink); }
+
+  /* Dashed rule top and bottom, closed by solid bracket ends. */
+  .bracket {
+    position: relative;
+    border-block: 1px dashed var(--footer-line);
+  }
+  .bracket::before,
+  .bracket::after {
+    content: '';
+    position: absolute;
+    top: -1px;
+    bottom: -1px;
+    width: 0.5rem;
+    border: 1px solid var(--footer-line);
+  }
+  .bracket::before { left: 0; border-right: 0; }
+  .bracket::after { right: 0; border-left: 0; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .footer-link, .footer-link:hover { transform: none; }
+  }
+
+  /* The timeline's spine runs through the centre of the dot column. */
+  .timeline::before {
+    content: '';
+    position: absolute;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    left: 0.75rem;
+    width: 1px;
+    background: var(--border);
+  }
+  @media (min-width: 48rem) {
+    .timeline::before {
+      left: 10.75rem;
+      top: 2.5rem;
+    }
+  }
+</style>
